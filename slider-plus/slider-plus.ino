@@ -1,12 +1,19 @@
 //########## Basic Setup & Code ##########
+//Touch Sensor Module
+const int TouchSensor_Pin = A0;
+
+
 void setup() {
+  Serial.begin(9600);
 
-
+  //Touch Sensor Module
+  pinMode(TouchSensor_Pin, INPUT);
 }
 
 void loop() {
 
 
+  Serial.println(ReadTouchSens());
 }
 
 
@@ -17,6 +24,7 @@ void RFIDRead(){
 }
 //NumberPad reading
 void NumPadRead(){
+
 }
 //Fingerprint reading
 void FingerprintRead(){
@@ -33,7 +41,10 @@ void WriteToBuzzer(){
 
 //########## Back-end Modules ##########
 //Opening Door from the inside using touch sensor
-void ReadTouchSens(){
+bool ReadTouchSens(){
+  bool TouchState = digitalRead(TouchSensor_Pin);
+  return TouchState;
+  delay(10);
 }
 //Reading configurations from the SD Card
 void ReadSDCard(){

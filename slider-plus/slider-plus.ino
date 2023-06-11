@@ -33,10 +33,7 @@ const int buzzerPin = 10;    // Pin connected to the buzzer
 #include <SPI.h>
 #include <SD.h>
 File myFile;
-const int misoPin = 15;
-const int mosiPin = 16;
-const int sckPin = 17;
-const int csPin = 18;
+const int chipSelect = 10;
 
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
@@ -55,7 +52,7 @@ void setup() {
   pinMode(TouchSensor_Pin, INPUT);
 
   //SD module
-  if (!SD.begin(csPin, misoPin, mosiPin, sckPin)) {
+  if (!SD.begin()) {
     Serial.println("initialization failed!");
     return;
   }

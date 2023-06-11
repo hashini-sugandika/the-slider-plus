@@ -1,6 +1,6 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-char doorStatus = "close"; //current status of the door
+int doorStatus = 0; //current status of the door
 int securityMode = 0; //select the mode of Multifactor Authentication
 
 //-----------Touch Sensor Module-----------
@@ -46,14 +46,20 @@ void setup() {
 
 void loop() {
   if(securityMode == 0){
-    if(NumPadRead()){
-      doorStatus = "open";
+    if(NumPadRead() && doorStatus == 0){
+      doorStatus = 1;
+      Serial.println("Door is opening...");
       WriteToBuzzer(1);
     }
   }
 
-  if(ReadTouchSens() && doorStatus == "open"){
-    doorStatus = "close";
+  if(ReadTouchSens() && doorStatus == 1){
+    doorStatus = 0;
+    Serial.println("Door is closing...");
+    WriteToBuzzer(1);
+  } else if(ReadTouchSens() && doorStatus == 0){
+    doorStatus = 1;
+    Serial.println("Door is Opening...");
     WriteToBuzzer(1);
   }
   delay(100);
@@ -68,6 +74,7 @@ void RFIDRead(){
 
 //NumberPad reading
 bool NumPadRead(){
+  bool correctPassword = false;
   char key = keypad.getKey();
     // Ignore any non-digit characters
     if (isdigit(key)) {
@@ -77,7 +84,6 @@ bool NumPadRead(){
 
       // Check if all digits have been entered
       if (keyIndex == passLength) {
-        bool correctPassword = false;
         for (int i = 0; i < passLength; i++) {
           if (enteredPassword[i] == password[i]) {
             correctPassword = true;
@@ -99,6 +105,7 @@ bool NumPadRead(){
         }
       }
     }
+    return false;
 }
 //Fingerprint reading
 void FingerprintRead(){

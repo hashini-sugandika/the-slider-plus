@@ -36,6 +36,10 @@ const int buzzerPin = 9;    // Pin connected to the buzzer
 File myFile;
 const int chipSelect = 10;
 
+//-----------Ultrasonic Sensor------------
+const int trigPin = 3;    //Trigger pin of the ultrasonic sensor
+const int echoPin = 2;    //Echo pin of the ultrasonic sensor
+const int thresholdDistance = 100;  // Threshold distance for triggering the door closing in centimeters
 
 
 
@@ -49,6 +53,12 @@ void setup() {
 
   //Touch Sensor Module
   pinMode(TouchSensor_Pin, INPUT);
+
+  //Trigger out
+  pinMode(trigPin, OUTPUT);
+
+  //Echo in
+  pinMode(echoPin, INPUT);
 
   //SD module
   if (!SD.begin()) {
@@ -186,6 +196,30 @@ bool FingerprintRead(){
 //--------Other Modules-------
 //Closing the door when someone leaves the room using motion sensor
 int ReadMotionSens(){
+  //ultrasonic pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Measure the duration of the echo pulse
+  long duration = pulseIn(echoPin, HIGH);
+
+  //In centimeters
+  float distance = duration * 0.034 / 2;
+  Serial.println(distance);
+
+  if (distance < thresholdDistance) {
+    Serial.println("Object near the door... Keeping the door open");
+    return 1;
+    // Code to keep the door open
+  } else {
+    Serial.println("Object has passed 100cm from the door... Closing the door");
+    return 0;
+    // Code to close the door
+  }
+  delay(1000);
 }
 
 //Buzzer write when opening and closing the door

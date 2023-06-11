@@ -190,4 +190,26 @@ void ControlDoor(){
 
 
 
+/*Meaning of the selected Mode
+{
+	mode : A
+	modules : NumberPad/NFC/FingerPrint
+}
+{
+	mode : K
+	modules : NumberPad Only
+}
+{
+	mode : N
+	modules : NFC Only
+}
+{
+	mode : F
+	modules : FingerPrint Only
+}
+{
+	mode : KN
+	modules : Require both Numberpad & NFC
+}
+*/
 

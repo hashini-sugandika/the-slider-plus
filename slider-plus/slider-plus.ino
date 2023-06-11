@@ -28,9 +28,12 @@ int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
 const int buzzerPin = 10;    // Pin connected to the buzzer
+//-----------SD Module----------------
+#include <SPI.h>
+#include <SD.h>
 
-
-
+File myFile;
+const int chipSelect = 10;
 
 
 
@@ -42,6 +45,12 @@ void setup() {
 
   //Touch Sensor Module
   pinMode(TouchSensor_Pin, INPUT);
+
+  //SD module
+  if (!SD.begin()) {
+    Serial.println("initialization failed!");
+    return;
+  }
 }
 
 void loop() {
@@ -129,7 +138,30 @@ bool ReadTouchSens(){
   delay(10);
 }
 //Reading configurations from the SD Card
-void ReadSDCard(){
+void ReadSDCard(const char* filename){
+  File file = SD.open("ss.txt");
+
+  if (file) {
+    while (file.available()) {
+      Serial.write(file.read());
+    }
+
+    file.close();
+  } else {
+    Serial.println("Error opening file.");
+  }
+}
+//Writing configurations to the SD Card
+void WriteSDCard(const char* filename, const char* data){
+  File file = SD.open(filename, FILE_WRITE);
+
+  if (file) {
+    file.println(data);
+    file.close();
+    Serial.println("Data written to file.");
+  } else {
+    Serial.println("Error opening file.");
+  }
 }
 //Reading the Door sensor to verify door status
 void ReadDoorSens(){

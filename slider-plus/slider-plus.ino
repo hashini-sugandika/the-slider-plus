@@ -3,6 +3,7 @@
 int currentDoorState; //current status of the door
 int lastDoorState; //last status of the door
 char securityMode = 'A'; //select the mode of Multifactor Authentication
+int timeOut = 0; //Motion sensor timeout
 
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
@@ -29,6 +30,7 @@ int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
 const int buzzerPin = 9;    // Pin connected to the buzzer
+int volume = 255;
 
 //-----------SD Module----------------
 #include <SPI.h>
@@ -40,6 +42,7 @@ const int chipSelect = 10;
 const int trigPin = 3;    //Trigger pin of the ultrasonic sensor
 const int echoPin = 2;    //Echo pin of the ultrasonic sensor
 const int thresholdDistance = 100;  // Threshold distance for triggering the door closing in centimeters
+int MotionStatus = 0;
 
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
@@ -57,10 +60,8 @@ void setup() {
   //Touch Sensor Module
   pinMode(TouchSensor_Pin, INPUT);
 
-  //Trigger out
+  //Motion Sensor Module
   pinMode(trigPin, OUTPUT);
-
-  //Echo in
   pinMode(echoPin, INPUT);
 
   //SD module
@@ -132,8 +133,10 @@ void loop() {
         break;
     }
   }
+  //printing current door status
   Serial.print("Door Status : ");
   Serial.println(ReadDoorSens());
+
   // Configuring how to function the inside touch button
   if(ReadTouchSens() && currentDoorState == 1){
     closeDoor();
@@ -141,6 +144,15 @@ void loop() {
     openDoor();
   }
   delay(50);
+
+  //automatically closing the door after few time
+  if(currentDoorState == 1 && ReadMotionSens() == 0){
+    Serial.println(timeOut++);
+    if(timeOut > 100 && MotionStatus == 0){
+      closeDoor();
+      MotionStatus = 1;
+    }
+  }
 }
 
 //########## Functions ##########
@@ -189,6 +201,7 @@ bool NumPadRead(){
           return true;
         } else {
           Serial.println("Wrong password entered.");
+          WriteToBuzzer(0);
           return false;
         }
       }
@@ -215,14 +228,14 @@ int ReadMotionSens(){
 
   //In centimeters
   float distance = duration * 0.034 / 2;
-  Serial.println(distance);
+  //Serial.println(distance);
 
   if (distance < thresholdDistance) {
-    Serial.println("Object near the door... Keeping the door open");
+    Serial.println("Object near the door");
     return 1;
     // Code to keep the door open
   } else {
-    Serial.println("Object has passed 100cm from the door... Closing the door");
+    Serial.println("Object has passed 100cm from the door");
     return 0;
     // Code to close the door
   }
@@ -233,11 +246,20 @@ int ReadMotionSens(){
 void WriteToBuzzer(bool inputValue){
   if (inputValue == HIGH) {
         // Number 1 is entered, sound the buzzer
-        analogWrite(buzzerPin, 2);
+        analogWrite(buzzerPin, volume);
         Serial.println("Door is moving...");
         delay(1000);  // Buzz for 1 second
         analogWrite(buzzerPin, 0);
       }
+    if (inputValue == LOW){
+        analogWrite(buzzerPin, volume-20);
+        delay(100);
+        analogWrite(buzzerPin, 0);
+        delay(100);
+        analogWrite(buzzerPin, volume-20);
+        delay(100);
+        analogWrite(buzzerPin, 0);
+    }
 }
 
 
@@ -293,6 +315,7 @@ bool ReadDoorSens(){
     delay(50);
   if (lastDoorState == HIGH && currentDoorState == LOW) {
     Serial.println("The door-closing event is detected");
+    timeOut = 0;
     return 0;
   }
 }

@@ -1,6 +1,8 @@
 //########## Basic Setup & Code ##########
+//-----------Touch Sensor Module-----------
+const int TouchSensor_Pin = A0;
 
-//Numberpad Module 
+//-----------Numberpad Module-----------
 #include <Keypad.h>
 const int ROW_NUM = 4; //four rows
 const int COLUMN_NUM = 4; //four columns
@@ -24,16 +26,17 @@ int keyIndex = 0;  // Index to keep track of the key being entered
 
 
 
-
+//########## Setup & Code ##########
 void setup() {
   Serial.begin(9600);
 
-
+  //Touch Sensor Module
+  pinMode(TouchSensor_Pin, INPUT);
 }
 
 void loop() {
   NumPadRead();
-
+  Serial.println(ReadTouchSens());
 }
 
 
@@ -45,13 +48,11 @@ void RFIDRead(){
 //NumberPad reading
 void NumPadRead(){
   char key = keypad.getKey();
-
     // Ignore any non-digit characters
     if (isdigit(key)) {
       enteredPassword[keyIndex] = key;
       keyIndex++;
       Serial.print(key);
-
 
       // Check if all digits have been entered
       if (keyIndex == passwordLength) {
@@ -68,7 +69,6 @@ void NumPadRead(){
         } else {
           Serial.println("Wrong password entered.");
         }
-
         // Reset variables for the next password entry
         keyIndex = 0;
         memset(enteredPassword, 0, sizeof(enteredPassword));
@@ -90,7 +90,10 @@ void WriteToBuzzer(){
 
 //########## Back-end Modules ##########
 //Opening Door from the inside using touch sensor
-void ReadTouchSens(){
+bool ReadTouchSens(){
+  bool TouchState = digitalRead(TouchSensor_Pin);
+  return TouchState;
+  delay(10);
 }
 //Reading configurations from the SD Card
 void ReadSDCard(){

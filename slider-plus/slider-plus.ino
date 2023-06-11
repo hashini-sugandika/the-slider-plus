@@ -245,18 +245,34 @@ void WriteSDCard(const char* filename, const char* data){
 }
 //Reading the Door sensor to verify door status
 void ReadDoorSens(){
-  lastDoorState = currentDoorState;
-  currentDoorState  = digitalRead(DOOR_SENSOR_PIN);
-  delay(200);
-  if (lastDoorState == LOW && currentDoorState == HIGH) {
-    Serial.println("The door-opening event is detected");
-    return 1;
-  }
-  else
-    delay(200);
-  if (lastDoorState == HIGH && currentDoorState == LOW) {
-    Serial.println("The door-closing event is detected");
-    return 0;
+  File file = SD.open("ss.txt");
+  String line;
+  if (file) {
+    while (file.available()) {
+      char x = file.read();
+      if (x == '\n'){
+        break;
+      }
+      line = line + x;      
+    }
+    char i;
+    char type;
+    String passWord;
+    String config[5];
+    for (i = 0; i<line.length(); i++){
+      char c = line.charAt(i);
+      if (c == ','){
+        config[0] = line.charAt(i-1);
+        config[1] = line.substring(i+1);
+        break;
+      }
+    }
+    Serial.println(config[0]);
+    Serial.println(config[1]);  
+    file.close();
+
+  } else {
+    Serial.println("Error opening file.");
   }
 }
 //Controlling the door using the motor

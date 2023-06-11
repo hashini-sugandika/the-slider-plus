@@ -1,4 +1,8 @@
 //########## Basic Setup & Code ##########
+//-----------Common for all Module---------
+char doorStatus = "close"; //current status of the door
+int securityMode = 0; //select the mode of Multifactor Authentication
+
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
 
@@ -18,12 +22,12 @@ byte pin_column[COLUMN_NUM] = {9, 8, 7, 6}; //connect to the column pinouts of t
 Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
 
 const int passLength = 4;
-char password[passLength];  // Define the correct password
+char password[passLength] = "1234";  // Define the correct password
 char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
-const int buzzerPin = 3;    // Pin connected to the buzzer
+const int buzzerPin = 10;    // Pin connected to the buzzer
 
 
 
@@ -41,7 +45,18 @@ void setup() {
 }
 
 void loop() {
+  if(securityMode == 0){
+    if(NumPadRead()){
+      doorStatus = "open";
+      WriteToBuzzer(1);
+    }
+  }
 
+  if(ReadTouchSens() && doorStatus == "open"){
+    doorStatus = "close";
+    WriteToBuzzer(1);
+  }
+  delay(100);
 }
 
 
@@ -62,9 +77,11 @@ bool NumPadRead(){
 
       // Check if all digits have been entered
       if (keyIndex == passLength) {
-        bool correctPassword = true;
+        bool correctPassword = false;
         for (int i = 0; i < passLength; i++) {
-          if (enteredPassword[i] != password[i]) {
+          if (enteredPassword[i] == password[i]) {
+            correctPassword = true;
+          } else {
             correctPassword = false;
             break;
           }
@@ -96,7 +113,7 @@ int ReadMotionSens(){
 void WriteToBuzzer(bool inputValue){
   if (inputValue == HIGH) {
         // Number 1 is entered, sound the buzzer
-        analogWrite(buzzerPin, 5);
+        analogWrite(buzzerPin, 2);
         Serial.println("Door is moving...");
         delay(1000);  // Buzz for 1 second
         analogWrite(buzzerPin, 0);

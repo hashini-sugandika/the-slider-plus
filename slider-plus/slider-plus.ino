@@ -32,11 +32,13 @@ const int buzzerPin = 10;    // Pin connected to the buzzer
 //-----------SD Module----------------
 #include <SPI.h>
 #include <SD.h>
-
 File myFile;
 const int chipSelect = 10;
 
-
+//------------Door Sensor------------
+const int DOOR_SENSOR_PIN = 13;
+int currentDoorState;
+int lastDoorState;
 
 
 
@@ -54,6 +56,10 @@ void setup() {
     Serial.println("initialization failed!");
     return;
   }
+
+  //Door Sensor
+  pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP); 
+  currentDoorState = digitalRead(DOOR_SENSOR_PIN); 
 }
 
 void loop() {
@@ -171,6 +177,19 @@ void WriteSDCard(const char* filename, const char* data){
 }
 //Reading the Door sensor to verify door status
 void ReadDoorSens(){
+  lastDoorState = currentDoorState;
+  currentDoorState  = digitalRead(DOOR_SENSOR_PIN);
+  delay(200);
+  if (lastDoorState == LOW && currentDoorState == HIGH) {
+    Serial.println("The door-opening event is detected");
+    return 1;
+  }
+  else
+    delay(200);
+  if (lastDoorState == HIGH && currentDoorState == LOW) {
+    Serial.println("The door-closing event is detected");
+    return 0;
+  }
 }
 //Controlling the door using the motor
 void ControlDoor(){

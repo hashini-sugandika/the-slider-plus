@@ -43,6 +43,7 @@ const int chipSelect = 10;
 //########## Setup & Code ##########
 void setup() {
   Serial.begin(9600);
+
   //Buzzer Module
   pinMode(buzzerPin, OUTPUT);
 
@@ -52,11 +53,14 @@ void setup() {
   //SD module
   if (!SD.begin()) {
     Serial.println("initialization failed!");
-    return;
   }
 }
 
 void loop() {
+  //reading from the file and setup password and mode
+  Serial.println(ReadSDCard());
+
+  // Choosing security methods depend on the mode
   if(securityMode == 0){
     if(NumPadRead() && doorStatus == 0){
       doorStatus = 1;
@@ -65,6 +69,7 @@ void loop() {
     }
   }
 
+  // Configuring how to function the inside touch button
   if(ReadTouchSens() && doorStatus == 1){
     doorStatus = 0;
     Serial.println("Door is closing...");
@@ -149,13 +154,13 @@ bool ReadTouchSens(){
 }
 //Reading configurations from the SD Card
 char ReadSDCard(){
-  const char filename = "ss.txt";
-  char fileContent;
+  const char filename = "slider-plus-data.txt";
+  char fileContent; 
   File file = SD.open(filename);
 
   if (file) {
     while (file.available()) {
-      fileContent = file.read();
+      fileContent = file.read();    //read from the file
     }
     file.close();
     return fileContent;

@@ -22,13 +22,18 @@ char password[passLength];  // Define the correct password
 char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;  // Index to keep track of the key being entered
 
-//Buzzer Module 
+//-----------Buzzer Module -----------
 const int buzzerPin = 3;    // Pin connected to the buzzer
+
+
+
+
 
 
 //########## Setup & Code ##########
 void setup() {
   Serial.begin(9600);
+  //Buzzer Module
   pinMode(buzzerPin, OUTPUT);
 
   //Touch Sensor Module
@@ -45,6 +50,7 @@ void loop() {
 //RFID Sensor reading
 void RFIDRead(){
 }
+
 //NumberPad reading
 bool NumPadRead(){
   char key = keypad.getKey();
@@ -85,9 +91,10 @@ void FingerprintRead(){
 //Closing the door when someone leaves the room using motion sensor
 int ReadMotionSens(){
 }
+
 //Buzzer write when opening and closing the door
-void WriteToBuzzer(int inputValue){
-  if (inputValue == 1) {
+void WriteToBuzzer(bool inputValue){
+  if (inputValue == HIGH) {
         // Number 1 is entered, sound the buzzer
         analogWrite(buzzerPin, 5);
         Serial.println("Door is moving...");

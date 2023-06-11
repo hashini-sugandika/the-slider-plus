@@ -28,12 +28,15 @@ int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
 const int buzzerPin = 10;    // Pin connected to the buzzer
+
 //-----------SD Module----------------
 #include <SPI.h>
 #include <SD.h>
 
 File myFile;
 const int chipSelect = 10;
+
+
 
 
 
@@ -138,17 +141,20 @@ bool ReadTouchSens(){
   delay(10);
 }
 //Reading configurations from the SD Card
-void ReadSDCard(const char* filename){
-  File file = SD.open("ss.txt");
+char ReadSDCard(){
+  const char filename = "ss.txt";
+  char fileContent;
+  File file = SD.open(filename);
 
   if (file) {
     while (file.available()) {
-      Serial.write(file.read());
+      fileContent = file.read();
     }
-
     file.close();
+    return fileContent;
   } else {
     Serial.println("Error opening file.");
+    return "";
   }
 }
 //Writing configurations to the SD Card

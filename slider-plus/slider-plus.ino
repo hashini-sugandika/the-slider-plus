@@ -1,6 +1,7 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-int doorStatus = 0; //current status of the door
+int currentDoorState; //current status of the door
+int lastDoorState; //last status of the door
 char securityMode = 'A'; //select the mode of Multifactor Authentication
 
 //-----------Touch Sensor Module-----------
@@ -19,7 +20,7 @@ char keys[ROW_NUM][COLUMN_NUM] = {
 };
 byte pin_rows[ROW_NUM] = {22, 23, 24, 25}; //connect to the row pinouts of the keypad
 byte pin_column[COLUMN_NUM] = {26, 27, 28, 29}; //connect to the column pinouts of the keypad
-Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM);
 
 const int passLength = 4;
 char password[passLength] = "1234";  // Define the correct password
@@ -37,8 +38,6 @@ const int chipSelect = 10;
 
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
-int currentDoorState;
-int lastDoorState;
 
 
 
@@ -61,13 +60,13 @@ void setup() {
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP); 
   currentDoorState = digitalRead(DOOR_SENSOR_PIN); 
 
-    //reading from the file and setup password and mode
+  //reading from the file and setup password and mode
   Serial.println(ReadSDCard());
 }
 
 void loop() {
   // Choosing security methods depend on the mode
-  if(doorStatus == 0){
+  if(currentDoorState == 0){
     switch (securityMode){
       case 'A':
         Serial.println("Security Mode : Any");
@@ -121,24 +120,23 @@ void loop() {
         break;
     }
   }
-
+  Serial.print("Door Status : ");
+  Serial.println(ReadDoorSens());
   // Configuring how to function the inside touch button
-  if(ReadTouchSens() && doorStatus == 1){
+  if(ReadTouchSens() && currentDoorState == 1){
     closeDoor();
-  } else if(ReadTouchSens() && doorStatus == 0){
+  } else if(ReadTouchSens() && currentDoorState == 0){
     openDoor();
   }
-  delay(100);
+  delay(50);
 }
 
 //########## Functions ##########
 void openDoor(){
-  doorStatus = 1;
   Serial.println("Door is opening...");
   WriteToBuzzer(1);
 }
 void closeDoor(){
-  doorStatus = 0;
   Serial.println("Door is closing...");
   WriteToBuzzer(1);
 }
@@ -148,7 +146,6 @@ void closeDoor(){
 //------Authentication Modules-----
 //RFID Sensor reading
 bool RFIDRead(){
-
 }
 
 //NumberPad reading
@@ -186,6 +183,7 @@ bool NumPadRead(){
     }
     return false;
 }
+
 //Fingerprint reading
 bool FingerprintRead(){
 }
@@ -214,6 +212,7 @@ bool ReadTouchSens(){
   return TouchState;
   delay(10);
 }
+
 //Reading configurations from the SD Card
 char ReadSDCard(){
   const char filename = "slider-plus-data.txt";
@@ -231,6 +230,7 @@ char ReadSDCard(){
     return "";
   }
 }
+
 //Writing configurations to the SD Card
 void WriteSDCard(const char* filename, const char* data){
   File file = SD.open(filename, FILE_WRITE);
@@ -243,22 +243,24 @@ void WriteSDCard(const char* filename, const char* data){
     Serial.println("Error opening file.");
   }
 }
+
 //Reading the Door sensor to verify door status
-void ReadDoorSens(){
+bool ReadDoorSens(){
   lastDoorState = currentDoorState;
   currentDoorState  = digitalRead(DOOR_SENSOR_PIN);
-  delay(200);
+  delay(50);
   if (lastDoorState == LOW && currentDoorState == HIGH) {
     Serial.println("The door-opening event is detected");
     return 1;
   }
   else
-    delay(200);
+    delay(50);
   if (lastDoorState == HIGH && currentDoorState == LOW) {
     Serial.println("The door-closing event is detected");
     return 0;
   }
 }
+
 //Controlling the door using the motor
 void ControlDoor(){
 }

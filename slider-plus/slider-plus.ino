@@ -1,7 +1,7 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
 int doorStatus = 0; //current status of the door
-int securityMode = 0; //select the mode of Multifactor Authentication
+char securityMode = 'A'; //select the mode of Multifactor Authentication
 
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
@@ -17,8 +17,8 @@ char keys[ROW_NUM][COLUMN_NUM] = {
   {'7','8','9', 'C'},
   {'*','0','#', 'D'}
 };
-byte pin_rows[ROW_NUM] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
-byte pin_column[COLUMN_NUM] = {9, 8, 7, 6}; //connect to the column pinouts of the keypad
+byte pin_rows[ROW_NUM] = {22, 23, 24, 25}; //connect to the row pinouts of the keypad
+byte pin_column[COLUMN_NUM] = {26, 27, 28, 29}; //connect to the column pinouts of the keypad
 Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
 
 const int passLength = 4;
@@ -27,7 +27,7 @@ char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
-const int buzzerPin = 10;    // Pin connected to the buzzer
+const int buzzerPin = 9;    // Pin connected to the buzzer
 
 //-----------SD Module----------------
 #include <SPI.h>
@@ -54,39 +54,94 @@ void setup() {
   if (!SD.begin()) {
     Serial.println("initialization failed!");
   }
+    //reading from the file and setup password and mode
+  Serial.println(ReadSDCard());
 }
 
 void loop() {
-  //reading from the file and setup password and mode
-  Serial.println(ReadSDCard());
-
   // Choosing security methods depend on the mode
-  if(securityMode == 0){
-    if(NumPadRead() && doorStatus == 0){
-      doorStatus = 1;
-      Serial.println("Door is opening...");
-      WriteToBuzzer(1);
+  if(doorStatus == 0){
+    switch (securityMode){
+      case 'A':
+        Serial.println("Security Mode : Any");
+        if(NumPadRead() || RFIDRead() || FingerprintRead()){
+          openDoor();
+        }
+       break;
+      case 'K':
+        Serial.println("Security Mode : Numberpad only");
+        if(NumPadRead()){
+          openDoor();
+        }
+        break;
+      case 'N':
+        Serial.println("Security Mode : NFC only");
+        if(RFIDRead()){
+          openDoor();
+        }
+        break;
+      case 'F':
+        Serial.println("Security Mode : Fingerprint only");
+        if(FingerprintRead()){
+          openDoor();
+        }
+        break;
+      case 'KN':
+        Serial.println("Security Mode : Numberpad & NFC");
+        if(NumPadRead() && RFIDRead()){
+          openDoor();
+        }
+        break;
+      case 'KF':
+        Serial.println("Security Mode : Numberpad & Fingerprint");
+        if(NumPadRead() && FingerprintRead()){
+          openDoor();
+        }
+        break;
+      case 'NF':
+        Serial.println("Security Mode : NFC & Fingerprint");
+        if(RFIDRead() && FingerprintRead()){
+          openDoor();
+        }
+        break;
+      case 'KNF':
+        Serial.println("Security Mode : Numberpad & NFC & Fingerprint");
+        if(NumPadRead() && RFIDRead() && FingerprintRead()){
+          openDoor();
+        }
+        break;
+      default:
+        break;
     }
   }
 
   // Configuring how to function the inside touch button
   if(ReadTouchSens() && doorStatus == 1){
-    doorStatus = 0;
-    Serial.println("Door is closing...");
-    WriteToBuzzer(1);
+    closeDoor();
   } else if(ReadTouchSens() && doorStatus == 0){
-    doorStatus = 1;
-    Serial.println("Door is Opening...");
-    WriteToBuzzer(1);
+    openDoor();
   }
   delay(100);
+}
+
+//########## Functions ##########
+void openDoor(){
+  doorStatus = 1;
+  Serial.println("Door is opening...");
+  WriteToBuzzer(1);
+}
+void closeDoor(){
+  doorStatus = 0;
+  Serial.println("Door is closing...");
+  WriteToBuzzer(1);
 }
 
 
 //########## Front-end Modules ##########
 //------Authentication Modules-----
 //RFID Sensor reading
-void RFIDRead(){
+bool RFIDRead(){
+
 }
 
 //NumberPad reading
@@ -125,7 +180,7 @@ bool NumPadRead(){
     return false;
 }
 //Fingerprint reading
-void FingerprintRead(){
+bool FingerprintRead(){
 }
 
 //--------Other Modules-------

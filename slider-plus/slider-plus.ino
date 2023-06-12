@@ -34,6 +34,10 @@ const int buzzerPin = 9;    // Pin connected to the buzzer
 #include <SD.h>
 File myFile;
 const int chipSelect = 10;
+const int misoPin = 50;
+const int mosiPin = 51;
+const int sckPin = 52;
+const int csPin = 53;
 
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
@@ -217,18 +221,32 @@ bool ReadTouchSens(){
 //Reading configurations from the SD Card
 char ReadSDCard(){
   const char filename = "slider-plus-data.txt";
-  char fileContent; 
   File file = SD.open(filename);
-
+  String line;
   if (file) {
     while (file.available()) {
-      fileContent = file.read();    //read from the file
+      char x = file.read();
+      if (x == '\n'){
+        break;
+      }
+      line = line + x;      
     }
+    char i;
+    String config[5];
+    for (i = 0; i<line.length(); i++){
+      char c = line.charAt(i);
+      if (c == ','){
+        config[i] = line.charAt(i-1);
+        config[i+1] = line.substring(i+1);
+      }
+    }
+    Serial.println(config[0]);
+    Serial.println(config[1]);  
     file.close();
-    return fileContent;
+    return config;
   } else {
     Serial.println("Error opening file.");
-    return "";
+    return;
   }
 }
 //Writing configurations to the SD Card
@@ -245,35 +263,7 @@ void WriteSDCard(const char* filename, const char* data){
 }
 //Reading the Door sensor to verify door status
 void ReadDoorSens(){
-  File file = SD.open("ss.txt");
-  String line;
-  if (file) {
-    while (file.available()) {
-      char x = file.read();
-      if (x == '\n'){
-        break;
-      }
-      line = line + x;      
-    }
-    char i;
-    char type;
-    String passWord;
-    String config[5];
-    for (i = 0; i<line.length(); i++){
-      char c = line.charAt(i);
-      if (c == ','){
-        config[0] = line.charAt(i-1);
-        config[1] = line.substring(i+1);
-        break;
-      }
-    }
-    Serial.println(config[0]);
-    Serial.println(config[1]);  
-    file.close();
-
-  } else {
-    Serial.println("Error opening file.");
-  }
+  
 }
 //Controlling the door using the motor
 void ControlDoor(){

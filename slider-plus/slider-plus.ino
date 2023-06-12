@@ -37,6 +37,10 @@ int volume = 255;
 #include <SD.h>
 File myFile;
 const int chipSelect = 10;
+const int misoPin = 50;
+const int mosiPin = 51;
+const int sckPin = 52;
+const int csPin = 53;
 
 //-----------Ultrasonic Sensor------------
 const int trigPin = 3;    //Trigger pin of the ultrasonic sensor
@@ -274,18 +278,32 @@ bool ReadTouchSens(){
 //Reading configurations from the SD Card
 char ReadSDCard(){
   const char filename = "slider-plus-data.txt";
-  char fileContent; 
   File file = SD.open(filename);
-
+  String line;
   if (file) {
     while (file.available()) {
-      fileContent = file.read();    //read from the file
+      char x = file.read();
+      if (x == '\n'){
+        break;
+      }
+      line = line + x;      
     }
+    char i;
+    String config[5];
+    for (i = 0; i<line.length(); i++){
+      char c = line.charAt(i);
+      if (c == ','){
+        config[i] = line.charAt(i-1);
+        config[i+1] = line.substring(i+1);
+      }
+    }
+    Serial.println(config[0]);
+    Serial.println(config[1]);  
     file.close();
-    return fileContent;
+    return config;
   } else {
     Serial.println("Error opening file.");
-    return "";
+    return;
   }
 }
 

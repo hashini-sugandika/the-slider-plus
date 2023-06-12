@@ -29,10 +29,10 @@ char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
-const int buzzerPin = 9;    // Pin connected to the buzzer
-int volume = 255;
+const int buzzerPin = 10;    // Pin connected to the buzzer
+int volume = 2;
 
-//-----------SD Module----------------
+//-----------SD Module---------------- 
 #include <SPI.h>
 #include <SD.h>
 File myFile;
@@ -51,10 +51,11 @@ int MotionStatus = 0;
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
 
-//-------------DC Motor----------------
-const int motorPwm = 2;    // initializing pin 2 as pwm
-const int motorIn_1 = 8;
-const int motorIn_2 = 9;
+//-------------DC Motor Controller----------------
+const int motorPwm = 4;    // initializing pin 2 as pwm
+const int motorIn_1 = 11;
+const int motorIn_2 = 12;
+int doorMovementTime = 5000;
 
 
 
@@ -81,13 +82,14 @@ void setup() {
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP); 
   currentDoorState = digitalRead(DOOR_SENSOR_PIN); 
 
-  //DC Motor
+  //Motor controler module
   pinMode(motorPwm, OUTPUT);   // we have to set PWM pin as output
   pinMode(motorIn_1, OUTPUT);  // Logic pins are also set as output
   pinMode(motorIn_2, OUTPUT);
 
-  //reading from the file and setup password and mode
+  //Testing--------------------
   Serial.println(ReadSDCard());
+
 }
 
 void loop() {
@@ -170,12 +172,14 @@ void loop() {
 
 //########## Functions ##########
 void openDoor(){
-  Serial.println("Door is opening...");
   WriteToBuzzer(1);
+  ControlDoor(1);
+  Serial.println("Door is opening...");
 }
 void closeDoor(){
-  Serial.println("Door is closing...");
   WriteToBuzzer(1);
+  ControlDoor(0);
+  Serial.println("Door is closing...");
 }
 
 
@@ -261,16 +265,15 @@ void WriteToBuzzer(bool inputValue){
   if (inputValue == HIGH) {
         // Number 1 is entered, sound the buzzer
         analogWrite(buzzerPin, volume);
-        Serial.println("Door is moving...");
         delay(1000);  // Buzz for 1 second
         analogWrite(buzzerPin, 0);
       }
     if (inputValue == LOW){
-        analogWrite(buzzerPin, volume-20);
+        analogWrite(buzzerPin, volume-20 < 0? 2: volume-20);
         delay(100);
         analogWrite(buzzerPin, 0);
         delay(100);
-        analogWrite(buzzerPin, volume-20);
+        analogWrite(buzzerPin, volume-20 < 0? 2: volume-20);
         delay(100);
         analogWrite(buzzerPin, 0);
     }
@@ -349,19 +352,23 @@ bool ReadDoorSens(){
 }
 
 //Controlling the door using the motor
-void ControlDoor(int direction){
+void ControlDoor(bool direction){
     if (direction == HIGH) {
+      // turn clockwise for 3 secs
+      Serial.println("Turning Right...");
       digitalWrite(motorIn_1, HIGH);
       digitalWrite(motorIn_2, LOW);
       analogWrite(motorPwm, 255);
-      // Clockwise for 3 secs
-      delay(3000);
+      delay(doorMovementTime);
       }
     else if (direction == LOW){
+      // turn anti clockwise for 3 secs
+      Serial.println("Turning Left...");
       digitalWrite(motorIn_1, LOW);
       digitalWrite(motorIn_2, HIGH);
-      delay(3000);
+      delay(doorMovementTime);
     }
+    //break the motor
     digitalWrite(motorIn_1, HIGH);
     digitalWrite(motorIn_2, HIGH);
     delay(1000);

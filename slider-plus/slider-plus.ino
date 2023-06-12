@@ -236,6 +236,7 @@ int ReadMotionSens(){
 
   if (distance < thresholdDistance) {
     Serial.println("Object near the door");
+    timeOut = 0;
     return 1;
     // Code to keep the door open
   } else {

@@ -5,6 +5,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <RFID.h>
+#include<stdio.h>
 
 const int SS_PIN = 10;  //slave select pin
 const int RST_PIN = 5;  //reset pin
@@ -23,10 +24,16 @@ byte readbackblock[18];  //This array is used for reading out a block. The MIFAR
 
 void setup() {
   //RFID Code
-  Serial.begin(9600);
-  Serial.println("Starting the RFID Reader...");
-  SPI.begin();
-  rfid.init();
+    Serial.begin(9600);        // Initialize serial communications with the PC
+        SPI.begin();               // Init SPI bus
+        mfrc522.PCD_Init();        // Init MFRC522 card (in case you wonder what PCD means: proximity coupling device)
+        Serial.println("\nScan a MIFARE Classic card");
+        
+        
+ 
+        for (byte i = 0; i < 6; i++) {
+                key.keyByte[i] = 0xFF;//keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
+        }
 }
 
 void loop() {

@@ -1,7 +1,9 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-int doorStatus = 0; //current status of the door
+int currentDoorState; //current status of the door
+int lastDoorState; //last status of the door
 char securityMode = 'A'; //select the mode of Multifactor Authentication
+int timeOut = 0; //Motion sensor timeout
 
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
@@ -19,7 +21,7 @@ char keys[ROW_NUM][COLUMN_NUM] = {
 };
 byte pin_rows[ROW_NUM] = {22, 23, 24, 25}; //connect to the row pinouts of the keypad
 byte pin_column[COLUMN_NUM] = {26, 27, 28, 29}; //connect to the column pinouts of the keypad
-Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM);
 
 const int passLength = 4;
 char password[passLength] = "1234";  // Define the correct password
@@ -28,6 +30,7 @@ int keyIndex = 0;  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
 const int buzzerPin = 9;    // Pin connected to the buzzer
+int volume = 255;
 
 //-----------SD Module----------------
 #include <SPI.h>
@@ -39,10 +42,15 @@ const int mosiPin = 51;
 const int sckPin = 52;
 const int csPin = 53;
 
+//-----------Ultrasonic Sensor------------
+const int trigPin = 3;    //Trigger pin of the ultrasonic sensor
+const int echoPin = 2;    //Echo pin of the ultrasonic sensor
+const int thresholdDistance = 100;  // Threshold distance for triggering the door closing in centimeters
+int MotionStatus = 0;
+
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
-int currentDoorState;
-int lastDoorState;
+
 
 
 
@@ -56,6 +64,10 @@ void setup() {
   //Touch Sensor Module
   pinMode(TouchSensor_Pin, INPUT);
 
+  //Motion Sensor Module
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
   //SD module
   if (!SD.begin()) {
     Serial.println("initialization failed!");
@@ -65,13 +77,13 @@ void setup() {
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP); 
   currentDoorState = digitalRead(DOOR_SENSOR_PIN); 
 
-    //reading from the file and setup password and mode
+  //reading from the file and setup password and mode
   Serial.println(ReadSDCard());
 }
 
 void loop() {
   // Choosing security methods depend on the mode
-  if(doorStatus == 0){
+  if(currentDoorState == 0){
     switch (securityMode){
       case 'A':
         Serial.println("Security Mode : Any");
@@ -125,24 +137,34 @@ void loop() {
         break;
     }
   }
+  //printing current door status
+  Serial.print("Door Status : ");
+  Serial.println(ReadDoorSens());
 
   // Configuring how to function the inside touch button
-  if(ReadTouchSens() && doorStatus == 1){
+  if(ReadTouchSens() && currentDoorState == 1){
     closeDoor();
-  } else if(ReadTouchSens() && doorStatus == 0){
+  } else if(ReadTouchSens() && currentDoorState == 0){
     openDoor();
   }
-  delay(100);
+  delay(50);
+
+  //automatically closing the door after few time
+  if(currentDoorState == 1 && ReadMotionSens() == 0){
+    Serial.println(timeOut++);
+    if(timeOut > 100 && MotionStatus == 0){
+      closeDoor();
+      MotionStatus = 1;
+    }
+  }
 }
 
 //########## Functions ##########
 void openDoor(){
-  doorStatus = 1;
   Serial.println("Door is opening...");
   WriteToBuzzer(1);
 }
 void closeDoor(){
-  doorStatus = 0;
   Serial.println("Door is closing...");
   WriteToBuzzer(1);
 }
@@ -152,7 +174,6 @@ void closeDoor(){
 //------Authentication Modules-----
 //RFID Sensor reading
 bool RFIDRead(){
-
 }
 
 //NumberPad reading
@@ -184,12 +205,14 @@ bool NumPadRead(){
           return true;
         } else {
           Serial.println("Wrong password entered.");
+          WriteToBuzzer(0);
           return false;
         }
       }
     }
     return false;
 }
+
 //Fingerprint reading
 bool FingerprintRead(){
 }
@@ -197,17 +220,50 @@ bool FingerprintRead(){
 //--------Other Modules-------
 //Closing the door when someone leaves the room using motion sensor
 int ReadMotionSens(){
+  //ultrasonic pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Measure the duration of the echo pulse
+  long duration = pulseIn(echoPin, HIGH);
+
+  //In centimeters
+  float distance = duration * 0.034 / 2;
+  //Serial.println(distance);
+
+  if (distance < thresholdDistance) {
+    Serial.println("Object near the door");
+    return 1;
+    // Code to keep the door open
+  } else {
+    Serial.println("Object has passed 100cm from the door");
+    return 0;
+    // Code to close the door
+  }
+  delay(1000);
 }
 
 //Buzzer write when opening and closing the door
 void WriteToBuzzer(bool inputValue){
   if (inputValue == HIGH) {
         // Number 1 is entered, sound the buzzer
-        analogWrite(buzzerPin, 2);
+        analogWrite(buzzerPin, volume);
         Serial.println("Door is moving...");
         delay(1000);  // Buzz for 1 second
         analogWrite(buzzerPin, 0);
       }
+    if (inputValue == LOW){
+        analogWrite(buzzerPin, volume-20);
+        delay(100);
+        analogWrite(buzzerPin, 0);
+        delay(100);
+        analogWrite(buzzerPin, volume-20);
+        delay(100);
+        analogWrite(buzzerPin, 0);
+    }
 }
 
 
@@ -218,6 +274,7 @@ bool ReadTouchSens(){
   return TouchState;
   delay(10);
 }
+
 //Reading configurations from the SD Card
 char ReadSDCard(){
   const char filename = "slider-plus-data.txt";
@@ -249,6 +306,7 @@ char ReadSDCard(){
     return;
   }
 }
+
 //Writing configurations to the SD Card
 void WriteSDCard(const char* filename, const char* data){
   File file = SD.open(filename, FILE_WRITE);
@@ -261,10 +319,25 @@ void WriteSDCard(const char* filename, const char* data){
     Serial.println("Error opening file.");
   }
 }
+
 //Reading the Door sensor to verify door status
-void ReadDoorSens(){
-  
+bool ReadDoorSens(){
+  lastDoorState = currentDoorState;
+  currentDoorState  = digitalRead(DOOR_SENSOR_PIN);
+  delay(50);
+  if (lastDoorState == LOW && currentDoorState == HIGH) {
+    Serial.println("The door-opening event is detected");
+    return 1;
+  }
+  else
+    delay(50);
+  if (lastDoorState == HIGH && currentDoorState == LOW) {
+    Serial.println("The door-closing event is detected");
+    timeOut = 0;
+    return 0;
+  }
 }
+
 //Controlling the door using the motor
 void ControlDoor(){
 }

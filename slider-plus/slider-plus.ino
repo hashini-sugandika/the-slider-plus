@@ -51,6 +51,10 @@ int MotionStatus = 0;
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
 
+//-------------DC Motor----------------
+const int motorPwm = 2;    // initializing pin 2 as pwm
+const int motorIn_1 = 8;
+const int motorIn_2 = 9;
 
 
 
@@ -76,6 +80,11 @@ void setup() {
   //Door Sensor Module
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP); 
   currentDoorState = digitalRead(DOOR_SENSOR_PIN); 
+
+  //DC Motor
+  pinMode(motorPwm, OUTPUT);   // we have to set PWM pin as output
+  pinMode(motorIn_1, OUTPUT);  // Logic pins are also set as output
+  pinMode(motorIn_2, OUTPUT);
 
   //reading from the file and setup password and mode
   Serial.println(ReadSDCard());
@@ -340,7 +349,22 @@ bool ReadDoorSens(){
 }
 
 //Controlling the door using the motor
-void ControlDoor(){
+void ControlDoor(int direction){
+    if (direction == HIGH) {
+      digitalWrite(motorIn_1, HIGH);
+      digitalWrite(motorIn_2, LOW);
+      analogWrite(motorPwm, 255);
+      // Clockwise for 3 secs
+      delay(3000);
+      }
+    else if (direction == LOW){
+      digitalWrite(motorIn_1, LOW);
+      digitalWrite(motorIn_2, HIGH);
+      delay(3000);
+    }
+    digitalWrite(motorIn_1, HIGH);
+    digitalWrite(motorIn_2, HIGH);
+    delay(1000);
 }
 
 

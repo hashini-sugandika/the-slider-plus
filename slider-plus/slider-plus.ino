@@ -4,7 +4,6 @@ int currentDoorState;     //current status of the door
 int lastDoorState;        //last status of the door
 char securityMode = 'A';  //select the mode of Multifactor Authentication
 char securityModeArray[5];  //Use for converting security types
-int timeOut = 0;          //Motion sensor timeout
 
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
@@ -38,9 +37,9 @@ int volume = 2;
 #include <SD.h>
 File myFile;
 const int chipSelect = 10;
-const int misoPin = 50;
-const int mosiPin = 51;
-const int sckPin = 52;
+const int misoPin = 50;   //Same for NFC Module
+const int mosiPin = 51;   //Same for NFC Module
+const int sckPin = 52;   //Same for NFC Module
 const int csPin = 53;
 
 //-----------Ultrasonic Sensor------------
@@ -48,6 +47,7 @@ const int trigPin = 3;              //Trigger pin of the ultrasonic sensor
 const int echoPin = 2;              //Echo pin of the ultrasonic sensor
 const int thresholdDistance = 100;  // Threshold distance for triggering the door closing in centimeters
 int MotionStatus = 0;
+int timeOut = 0;          //Motion sensor timeout
 
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
@@ -59,13 +59,11 @@ const int motorIn_2 = 12;
 int doorMovementTime = 5000;
 
 //-------------RFID Module-----------
-#include <SPI.h>
 #include <MFRC522.h>
 #include <RFID.h>
-#include <stdio.h>
 
-const int SS_PIN = 10;  //slave select pin
-const int RST_PIN = 5;  //reset pin
+const int SS_PIN = 5;  //slave select pin
+const int RST_PIN = 6;  //reset pin
 
 RFID rfid(SS_PIN, RST_PIN);
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // instatiate a MFRC522 reader object.

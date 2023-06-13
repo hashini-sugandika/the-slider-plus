@@ -29,7 +29,7 @@ char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;                  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
-const int buzzerPin = 9;  // Pin connected to the buzzer
+const int buzzerPin = 10;  // Pin connected to the buzzer
 int volume = 2;
 
 //-----------SD Module----------------
@@ -61,12 +61,12 @@ int doorMovementTime = 5000;
 //-------------RFID Module-----------
 #include <MFRC522.h>
 #include <stdio.h>
-//#include <RFID.h>
+#include <RFID.h>
 
-#define SS_PIN 10   //slave select pin
+#define SS_PIN 53   //slave select pin
 #define RST_PIN 5  //reset pin
 
-//RFID rfid(SS_PIN, RST_PIN);
+RFID rfid(SS_PIN, RST_PIN);
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // instatiate a MFRC522 reader object.
 MFRC522::MIFARE_Key key;           //create a MIFARE_Key struct named 'key', which will hold the card information
 

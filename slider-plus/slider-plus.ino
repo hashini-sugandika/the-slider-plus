@@ -7,7 +7,7 @@
 #include <RFID.h>
 #include <stdio.h>
 
-const int SS_PIN = 10;  //slave select pin
+const int SS_PIN = 53;  //slave select pin
 const int RST_PIN = 5;  //reset pin
 
 RFID rfid(SS_PIN, RST_PIN);

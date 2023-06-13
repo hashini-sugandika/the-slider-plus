@@ -1,9 +1,14 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-int currentDoorState;       //current status of the door
-int lastDoorState;          //last status of the door
+int currentDoorState = 0;       //current status of the door
+int lastDoorState = 0;          //last status of the door
 char securityMode = 'A';    //select the mode of Multifactor Authentication
 char securityModeArray[5];  //Use for converting security types
+
+//-----------LED Blink--------------
+int outerLEDPin = 7;
+int LedtimeOut = 0;
+int ledIntense = 100;
 
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
@@ -31,7 +36,7 @@ bool NumpadStatus = false;
 
 //-----------Buzzer Module -----------
 const int buzzerPin = 10;  // Pin connected to the buzzer
-int volume = 255;
+int volume = 2;
 
 //-----------SD Module----------------
 #include <SPI.h>
@@ -89,6 +94,7 @@ void setup() {
   //setting SPI and SS Pins
   Serial.begin(9600);
   SPI.begin();  // Init SPI bus
+  pinMode(outerLEDPin, OUTPUT);
 
   //Buzzer Module
   pinMode(buzzerPin, OUTPUT);
@@ -208,6 +214,18 @@ void loop() {
       closeDoor();
       MotionStatus = 1;
     }
+  }
+
+  //lightup the keypad if someone near the door
+  if(ReadMotionSens()){
+    analogWrite(outerLEDPin, ledIntense);
+    LedtimeOut = 0;
+
+  }else {
+    Serial.println(LedtimeOut++);
+  }
+  if (LedtimeOut > 50){
+    analogWrite(outerLEDPin, 0);
   }
 }
 

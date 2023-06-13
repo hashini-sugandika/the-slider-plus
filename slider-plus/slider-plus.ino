@@ -5,7 +5,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <RFID.h>
-#include<stdio.h>
+#include <stdio.h>
 
 const int SS_PIN = 10;  //slave select pin
 const int RST_PIN = 5;  //reset pin
@@ -24,16 +24,11 @@ byte readbackblock[18];  //This array is used for reading out a block. The MIFAR
 
 void setup() {
   //RFID Code
-    Serial.begin(9600);        // Initialize serial communications with the PC
-        SPI.begin();               // Init SPI bus
-        mfrc522.PCD_Init();        // Init MFRC522 card (in case you wonder what PCD means: proximity coupling device)
-        Serial.println("\nScan a MIFARE Classic card");
-        
-        
- 
-        for (byte i = 0; i < 6; i++) {
-                key.keyByte[i] = 0xFF;//keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
-        }
+  Serial.begin(9600);  // Initialize serial communications with the PC
+  SPI.begin();         // Init SPI bus
+    for (byte i = 0; i < 6; i++) {
+    key.keyByte[i] = 0xFF;  //keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
+  }
 }
 
 void loop() {
@@ -45,6 +40,9 @@ void loop() {
 //------Authentication Modules-----
 //RFID Sensor reading
 bool RFIDRead() {
+  mfrc522.PCD_Init();  // Init MFRC522 card (in case you wonder what PCD means: proximity coupling device)
+  Serial.println("\nScan a MIFARE Classic card");
+
   // Look for new cards (in case you wonder what PICC means: proximity integrated circuit card)
   if (!mfrc522.PICC_IsNewCardPresent()) {  //if PICC_IsNewCardPresent returns 1, a new card has been found and we continue
     return;                                //if it did not find a new card is returns a '0' and we return to the start of the loop
@@ -110,7 +108,7 @@ int readBlock(int blockNumber, byte arrayAddress[]) {
 
   /*****************************************reading a block***********************************************************/
 
-  byte buffersize = 18;      //we need to define a variable with the read buffer size, since the MIFARE_Read method below needs a pointer to the variable that contains the size...
+  byte buffersize = 18;                                                  //we need to define a variable with the read buffer size, since the MIFARE_Read method below needs a pointer to the variable that contains the size...
   status = mfrc522.MIFARE_Read(blockNumber, arrayAddress, &buffersize);  //&buffersize is a pointer to the buffersize variable; MIFARE_Read requires a pointer instead of just a number
   if (status != MFRC522::STATUS_OK) {
     Serial.print("MIFARE_read() failed: ");

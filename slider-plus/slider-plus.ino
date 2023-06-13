@@ -53,7 +53,7 @@ int MotionStatus = 0;
 const int DOOR_SENSOR_PIN = 13;
 
 //-------------DC Motor Controller----------------
-const int motorPwm = 4;  // initializing pin 2 as pwm
+const int motorPwm = 4;  // initializing pin 4 as pwm
 const int motorIn_1 = 11;
 const int motorIn_2 = 12;
 int doorMovementTime = 5000;

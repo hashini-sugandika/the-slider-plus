@@ -1,8 +1,8 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-int currentDoorState;     //current status of the door
-int lastDoorState;        //last status of the door
-char securityMode = 'A';  //select the mode of Multifactor Authentication
+int currentDoorState;       //current status of the door
+int lastDoorState;          //last status of the door
+char securityMode = 'A';    //select the mode of Multifactor Authentication
 char securityModeArray[5];  //Use for converting security types
 
 //-----------Touch Sensor Module-----------
@@ -24,12 +24,12 @@ byte pin_column[COLUMN_NUM] = { 26, 27, 28, 29 };  //connect to the column pinou
 Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM);
 
 const int passLength = 4;
-String password;         // Define the correct password
+String password;                   // Define the correct password
 char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;                  // Index to keep track of the key being entered
 
 //-----------Buzzer Module -----------
-const int buzzerPin = 10;  // Pin connected to the buzzer
+const int buzzerPin = 9;  // Pin connected to the buzzer
 int volume = 2;
 
 //-----------SD Module----------------
@@ -37,8 +37,8 @@ int volume = 2;
 #include <SD.h>
 File myFile;
 const int chipSelect = 10;
-const int misoPin = 50;   //Same for NFC Module
-const int mosiPin = 51;   //Same for NFC Module
+const int misoPin = 50;  //Same for NFC Module
+const int mosiPin = 51;  //Same for NFC Module
 const int sckPin = 52;   //Same for NFC Module
 const int csPin = 53;
 
@@ -47,7 +47,7 @@ const int trigPin = 3;              //Trigger pin of the ultrasonic sensor
 const int echoPin = 2;              //Echo pin of the ultrasonic sensor
 const int thresholdDistance = 100;  // Threshold distance for triggering the door closing in centimeters
 int MotionStatus = 0;
-int timeOut = 0;          //Motion sensor timeout
+int timeOut = 0;  //Motion sensor timeout
 
 //------------Door Sensor------------
 const int DOOR_SENSOR_PIN = 13;
@@ -60,12 +60,13 @@ int doorMovementTime = 5000;
 
 //-------------RFID Module-----------
 #include <MFRC522.h>
-#include <RFID.h>
+#include <stdio.h>
+//#include <RFID.h>
 
-const int SS_PIN = 5;  //slave select pin
-const int RST_PIN = 6;  //reset pin
+#define SS_PIN 10   //slave select pin
+#define RST_PIN 5  //reset pin
 
-RFID rfid(SS_PIN, RST_PIN);
+//RFID rfid(SS_PIN, RST_PIN);
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // instatiate a MFRC522 reader object.
 MFRC522::MIFARE_Key key;           //create a MIFARE_Key struct named 'key', which will hold the card information
 
@@ -109,92 +110,94 @@ void setup() {
 
   //Reading from the config file
   ReadSDCard();
-  
+
   //NFC reader module
-  SPI.begin();         // Init SPI bus
+  SPI.begin();  // Init SPI bus
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;  //keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
   }
 }
 
 void loop() {
+  RFIDRead();
+  delay(200);
   //Choosing security methods depend on the mode
-  if(currentDoorState == 0){
-    //Serial.println(securityMode);
-    //Serial.println(password);
-    switch (securityMode){
-      case 'A':
-        Serial.println("Security Mode : Any");
-        if(NumPadRead() || RFIDRead() || FingerprintRead()){
-          openDoor();
-        }
-       break;
-      case 'B':
-        Serial.println("Security Mode : Numberpad only");
-        if(NumPadRead()){
-          openDoor();
-        }
-        break;
-      case 'C':
-        Serial.println("Security Mode : NFC only");
-        if(RFIDRead()){
-          openDoor();
-        }
-        break;
-      case 'D':
-        Serial.println("Security Mode : Fingerprint only");
-        if(FingerprintRead()){
-          openDoor();
-        }
-        break;
-      case 'E':
-        Serial.println("Security Mode : Numberpad & NFC");
-        if(NumPadRead() && RFIDRead()){
-          openDoor();
-        }
-        break;
-      case 'F':
-        Serial.println("Security Mode : Numberpad & Fingerprint");
-        if(NumPadRead() && FingerprintRead()){
-          openDoor();
-        }
-        break;
-      case 'G':
-        Serial.println("Security Mode : NFC & Fingerprint");
-        if(RFIDRead() && FingerprintRead()){
-          openDoor();
-        }
-        break;
-      case 'H':
-        Serial.println("Security Mode : Numberpad & NFC & Fingerprint");
-        if(NumPadRead() && RFIDRead() && FingerprintRead()){
-          openDoor();
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  //printing current door status
-  Serial.print("Door Status : ");
-  Serial.println(ReadDoorSens());
+  // if (currentDoorState == 0) {
+  //   //Serial.println(securityMode);
+  //   //Serial.println(password);
+  //   switch (securityMode) {
+  //     case 'A':
+  //       Serial.println("Security Mode : Any");
+  //       if (NumPadRead() || RFIDRead() || FingerprintRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'B':
+  //       Serial.println("Security Mode : Numberpad only");
+  //       if (NumPadRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'C':
+  //       Serial.println("Security Mode : NFC only");
+  //       if (RFIDRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'D':
+  //       Serial.println("Security Mode : Fingerprint only");
+  //       if (FingerprintRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'E':
+  //       Serial.println("Security Mode : Numberpad & NFC");
+  //       if (NumPadRead() && RFIDRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'F':
+  //       Serial.println("Security Mode : Numberpad & Fingerprint");
+  //       if (NumPadRead() && FingerprintRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'G':
+  //       Serial.println("Security Mode : NFC & Fingerprint");
+  //       if (RFIDRead() && FingerprintRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     case 'H':
+  //       Serial.println("Security Mode : Numberpad & NFC & Fingerprint");
+  //       if (NumPadRead() && RFIDRead() && FingerprintRead()) {
+  //         openDoor();
+  //       }
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // }
+  // //printing current door status
+  // Serial.print("Door Status : ");
+  // Serial.println(ReadDoorSens());
 
-  // Configuring how to function the inside touch button
-  if(ReadTouchSens() && currentDoorState == 1){
-    closeDoor();
-  } else if(ReadTouchSens() && currentDoorState == 0){
-    openDoor();
-  }
-  delay(50);
+  // // Configuring how to function the inside touch button
+  // if (ReadTouchSens() && currentDoorState == 1) {
+  //   closeDoor();
+  // } else if (ReadTouchSens() && currentDoorState == 0) {
+  //   openDoor();
+  // }
+  // delay(50);
 
-  //automatically closing the door after few time
-  if(currentDoorState == 1 && ReadMotionSens() == 0){
-    Serial.println(timeOut++);
-    if(timeOut > 100 && MotionStatus == 0){
-      closeDoor();
-      MotionStatus = 1;
-    }
-  }
+  // //automatically closing the door after few time
+  // if (currentDoorState == 1 && ReadMotionSens() == 0) {
+  //   Serial.println(timeOut++);
+  //   if (timeOut > 100 && MotionStatus == 0) {
+  //     closeDoor();
+  //     MotionStatus = 1;
+  //   }
+  // }
 }
 
 //########## Functions ##########
@@ -233,15 +236,15 @@ bool RFIDRead() {
   //mfrc522.PICC_DumpToSerial(&(mfrc522.uid));//uncomment this if you want to see the entire 1k memory with the block written into it.
 
   readBlock(block, readbackblock);  //read the block back
-  Serial.print("read block: ");
+  //Serial.print("read block: ");
   char pass[16];
   for (int j = 0; j < 16; j++)  //print the block contents
   {
-    Serial.write(readbackblock[j]);
+    //Serial.write(readbackblock[j]);
     pass[j] = readbackblock[j];
     //Serial.write() transmits the ASCII numbers as human readable characters to serial monitor
   }
-  Serial.print("");
+  //Serial.print("");
 
   char code[] = { 'D', 'i', 'G', 'i', 't', 'a', 'l', 'C', 'o', 'n', 't', 'r', 'o', 'l', '_', '_' };
   bool flag = false;
@@ -252,10 +255,10 @@ bool RFIDRead() {
   }
   if (flag == true) {
     Serial.print("\nAccess Granted");
-    return HIGH;
+    return true;
   } else {
     Serial.print("\nAccess Denied");
-    return LOW;
+    return false;
   }
 
   //Reset varibles
@@ -263,7 +266,7 @@ bool RFIDRead() {
   for (int i = 0; i < sizeof(readbackblock); i++) {
     readbackblock[i] = '\0';
   }
-  return;
+  return false;
 }
 
 
@@ -277,7 +280,7 @@ int readBlock(int blockNumber, byte arrayAddress[]) {
   if (status != MFRC522::STATUS_OK) {
     Serial.print("PCD_Authenticate() failed (read): ");
     Serial.println(mfrc522.GetStatusCodeName(status));
-    return;  //return "3" as error message
+    return false;  //return "3" as error message
   }
 
   /*****************************************reading a block***********************************************************/
@@ -287,7 +290,7 @@ int readBlock(int blockNumber, byte arrayAddress[]) {
   if (status != MFRC522::STATUS_OK) {
     Serial.print("MIFARE_read() failed: ");
     Serial.println(mfrc522.GetStatusCodeName(status));
-    return;  //return "4" as error message
+    return false;  //return "4" as error message
   }
   Serial.println("block was read");
 }
@@ -414,8 +417,8 @@ void ReadSDCard() {
       }
     }
     config[0].toCharArray(securityModeArray, 5);  //converting string to char
-    securityMode = securityModeArray[0];    //setting the security mode
-    password = config[1];     //setting the new password
+    securityMode = securityModeArray[0];          //setting the security mode
+    password = config[1];                         //setting the new password
     file.close();
   } else {
     Serial.println("Error opening file.");

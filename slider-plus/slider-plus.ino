@@ -1,14 +1,14 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-int currentDoorState = 0;       //current status of the door
-int lastDoorState = 0;          //last status of the door
+int currentDoorState = 0;   //current status of the door
+int lastDoorState = 0;      //last status of the door
 char securityMode = 'A';    //select the mode of Multifactor Authentication
 char securityModeArray[5];  //Use for converting security types
 
-//-----------LED Blink--------------
+//-----------LIghtup Numberpad--------------
 int outerLEDPin = 7;
 int LedtimeOut = 0;
-int ledIntense = 100;
+int ledIntense = 100;  //Intese of tge light
 
 //-----------Touch Sensor Module-----------
 const int TouchSensor_Pin = A0;
@@ -28,49 +28,49 @@ byte pin_rows[ROW_NUM] = { 22, 23, 24, 25 };       //connect to the row pinouts 
 byte pin_column[COLUMN_NUM] = { 26, 27, 28, 29 };  //connect to the column pinouts of the keypad
 Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM);
 
-const int passLength = 4;
+const int passLength = 4;          //password length
 String password;                   // Define the correct password
 char enteredPassword[passLength];  // Variable to store the entered password
 int keyIndex = 0;                  // Index to keep track of the key being entered
-bool NumpadStatus = false;
+bool NumpadStatus = false;         //current numberpad unlock status
 
 //-----------Buzzer Module -----------
 const int buzzerPin = 10;  // Pin connected to the buzzer
-int volume = 2;
+int volume = 255;          //volume of the buzzer
 
 //-----------SD Module----------------
 #include <SPI.h>
 #include <SD.h>
-File myFile;
+File myFile;  //creating a file instance
 const int chipSelect = 10;
 const int misoPin = 50;  //Same for NFC Module
 const int mosiPin = 51;  //Same for NFC Module
 const int sckPin = 52;   //Same for NFC Module
-#define SD_SS_Pin 49
+#define SD_SS_Pin 49     //Select slave pin for SD Module
 
 //-----------Ultrasonic Sensor------------
 const int trigPin = 3;              //Trigger pin of the ultrasonic sensor
 const int echoPin = 2;              //Echo pin of the ultrasonic sensor
 const int thresholdDistance = 100;  // Threshold distance for triggering the door closing in centimeters
-int MotionStatus = 0;
-int timeOut = 0;  //Motion sensor timeout
-
+int MotionStatus = 0;               //Whether the sensor is triggered or not
+int timeOut = 0;                    //Motion sensor timeout
 //------------Door Sensor------------
-const int DOOR_SENSOR_PIN = 13;
+const int DOOR_SENSOR_PIN = 13;  //door sensor pin
 
 //-------------DC Motor Controller----------------
 const int motorPwm = 4;  // initializing pin 4 as pwm
 const int motorIn_1 = 11;
 const int motorIn_2 = 12;
-int doorMovementTime = 5000;
+int motorSpeed = 255;        //speed of the motor
+int doorMovementTime = 175;  //control the angle of motor turn
 
 //-------------RFID Module-----------
 #include <MFRC522.h>
 #include <stdio.h>
 
-#define RFID_SS_PIN 48  //slave select pin
-#define RST_PIN 5       //reset pin
-bool RFIDStatus = false;
+#define RFID_SS_PIN 48    //slave select pin for RFID module
+#define RST_PIN 5         //reset pin
+bool RFIDStatus = false;  //current read of the rfid module
 
 MFRC522 mfrc522(RFID_SS_PIN, RST_PIN);  // instatiate a MFRC522 reader object.
 MFRC522::MIFARE_Key key;                //create a MIFARE_Key struct named 'key', which will hold the card information
@@ -86,7 +86,7 @@ byte readbackblock[18];  //This array is used for reading out a block. The MIFAR
 const int relayPin = 6;  //use for switching between SD module and NFC module
 
 //-------------Fingerprint Module--------
-bool FingerprintStatus = false;
+bool FingerprintStatus = false;  //current status of the fingerprint module
 
 
 //########## Setup & Code ##########
@@ -117,8 +117,8 @@ void setup() {
 
   //SD module
   pinMode(relayPin, OUTPUT);
-  digitalWrite(relayPin, LOW);
-  if (!SD.begin(SD_SS_Pin)) {
+  digitalWrite(relayPin, LOW);  //turn on the replay to read from the SD module
+  if (!SD.begin(SD_SS_Pin)) {   //initialize the SD module to read or write
     Serial.println("SD card initialization failed!");
   } else {
     Serial.println("SD card initialization Successfull!");
@@ -142,7 +142,7 @@ void loop() {
   if (currentDoorState == 0) {
     //Serial.println(securityMode);
     //Serial.println(password);
-    switch (securityMode) {
+    switch (securityMode) {  //selecting security mode based on the configured in the text file
       case 'A':
         Serial.println("Security Mode : Any");
         if (NumPadRead() || RFIDRead() || FingerprintRead()) {
@@ -200,12 +200,12 @@ void loop() {
   Serial.println(ReadDoorSens());
 
   // Configuring how to function the inside touch button
-  if (ReadTouchSens() && currentDoorState == 1) {
+  if (ReadTouchSens() && currentDoorState == 1) {  //close the door of door is open
     closeDoor();
-  } else if (ReadTouchSens() && currentDoorState == 0) {
+  } else if (ReadTouchSens() && currentDoorState == 0) {  //open the door if door is close
     openDoor();
   }
-  delay(50);
+  delay(10);
 
   //automatically closing the door after few time
   if (currentDoorState == 1 && ReadMotionSens() == 0) {
@@ -217,28 +217,28 @@ void loop() {
   }
 
   //lightup the keypad if someone near the door
-  if(ReadMotionSens()){
+  if (ReadMotionSens()) {
     analogWrite(outerLEDPin, ledIntense);
     LedtimeOut = 0;
-
-  }else {
+  } else {
     Serial.println(LedtimeOut++);
   }
-  if (LedtimeOut > 50){
+  if (LedtimeOut > 50) {
     analogWrite(outerLEDPin, 0);
   }
 }
 
 //########## Functions ##########
-void openDoor() {
+void openDoor() {  //open the door function
   WriteToBuzzer(1);
   ControlDoor(1);
   Serial.println("Door is opening...");
+  //resetting the status of each module
   RFIDStatus = false;
   NumpadStatus = false;
   FingerprintStatus = false;
 }
-void closeDoor() {
+void closeDoor() {  //closing the door function
   WriteToBuzzer(1);
   ControlDoor(0);
   Serial.println("Door is closing...");
@@ -278,14 +278,14 @@ bool RFIDRead() {
   }
   //Serial.print("");
 
-  char code[] = { 'D', 'i', 'G', 'i', 't', 'a', 'l', 'C', 'o', 'n', 't', 'r', 'o', 'l', '_', '_' };
+  char code[] = { 'D', 'i', 'G', 'i', 't', 'a', 'l', 'C', 'o', 'n', 't', 'r', 'o', 'l', '_', '_' };  //password of the RFID card to check
   bool flag = false;
   for (int i = 1; i < 16; i++) {
     if (code[i] == pass[i]) {
       flag = true;
     }
   }
-  if (flag == true) {
+  if (flag == true) {  //checking whether the card is correct or not
     Serial.println("Access Granted");
     RFIDStatus = true;
     Serial.println("RFID Correct!");
@@ -293,6 +293,7 @@ bool RFIDRead() {
   } else {
     Serial.println("Access Denied");
     WriteToBuzzer(0);
+    //resetting the status of modules
     RFIDStatus = false;
     NumpadStatus = false;
     FingerprintStatus = false;
@@ -307,7 +308,7 @@ bool RFIDRead() {
   return 0;
 }
 
-
+//reading from the RFID card
 int readBlock(int blockNumber, byte arrayAddress[]) {
   int largestModulo4Number = blockNumber / 4 * 4;
   int trailerBlock = largestModulo4Number + 3;  //determine trailer block for the sector
@@ -336,7 +337,7 @@ int readBlock(int blockNumber, byte arrayAddress[]) {
 //NumberPad reading
 bool NumPadRead() {
   bool correctPassword = false;
-  char key = keypad.getKey();
+  char key = keypad.getKey();  //reading from the num pad
   // Ignore any non-digit characters
   if (isdigit(key)) {
     enteredPassword[keyIndex] = key;
@@ -357,6 +358,7 @@ bool NumPadRead() {
       keyIndex = 0;
       memset(enteredPassword, 0, sizeof(enteredPassword));
 
+      //checking whether the entered password is correct or not
       if (correctPassword) {
         Serial.println("Correct password entered.");
         NumpadStatus = true;
@@ -365,6 +367,7 @@ bool NumPadRead() {
       } else {
         Serial.println("Wrong password entered.");
         WriteToBuzzer(0);
+        //resetting the module status
         RFIDStatus = false;
         NumpadStatus = false;
         FingerprintStatus = false;
@@ -377,6 +380,9 @@ bool NumPadRead() {
 
 //Fingerprint reading
 bool FingerprintRead() {
+  //fingerprint module can be added here
+  //just return 1 and 0 based on success or failure of the reading
+  //add other codes to the relevent parts
 }
 
 //--------Other Modules-------
@@ -396,17 +402,16 @@ int ReadMotionSens() {
   float distance = duration * 0.034 / 2;
   //Serial.println(distance);
 
+  // Code to keep the door open
   if (distance < thresholdDistance) {
     Serial.println("Object near the door");
     timeOut = 0;
     return 1;
-    // Code to keep the door open
   } else {
+    // Code to close the door
     Serial.println("Object has passed 100cm from the door");
     return 0;
-    // Code to close the door
   }
-  delay(1000);
 }
 
 //Buzzer write when opening and closing the door
@@ -417,12 +422,13 @@ void WriteToBuzzer(bool inputValue) {
     delay(1000);  // Buzz for 1 second
     analogWrite(buzzerPin, 0);
   }
+  // buzzer for wrong inputs
   if (inputValue == LOW) {
-    analogWrite(buzzerPin, volume - 20 < 0 ? 2 : volume - 20);
+    analogWrite(buzzerPin, volume - 20 < 0 ? volume : volume - 20);
     delay(100);
     analogWrite(buzzerPin, 0);
     delay(100);
-    analogWrite(buzzerPin, volume - 20 < 0 ? 2 : volume - 20);
+    analogWrite(buzzerPin, volume - 20 < 0 ? volume : volume - 20);
     delay(100);
     analogWrite(buzzerPin, 0);
   }
@@ -434,7 +440,7 @@ void WriteToBuzzer(bool inputValue) {
 bool ReadTouchSens() {
   bool TouchState = digitalRead(TouchSensor_Pin);  //read from the sensor and assign the value to the variable
   return TouchState;
-  delay(10);
+  delay(5);
 }
 
 //Reading configurations from the SD Card
@@ -442,19 +448,19 @@ void ReadSDCard() {
   const char* filename = "config.txt";
   File file = SD.open(filename);
   String line;
-  if (file) {
+  if (file) {   //checking for ht file
     while (file.available()) {
       char x = file.read();
-      if (x == '\n') {
+      if (x == '\n') {    //read the first line
         break;
       }
-      line = line + x;
+      line = line + x;      //add each char into a string line
     }
     char i;
-    String config[5];
+    String config[5];       //saving config to an array
     for (i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
-      if (c == ',') {
+      if (c == ',') {       //break into indexes using ","
         config[0] = line.charAt(i - 1);
         config[1] = line.substring(i + 1);
       }
@@ -471,13 +477,13 @@ void ReadSDCard() {
 //Writing configurations to the SD Card
 void WriteSDCard(const char* filename, const char* data) {
   //delete the current file and write
-  if(SD.remove(filename)){
-     Serial.println("Data written to file.");
+  if (SD.remove(filename)) {
+    Serial.println("Data written to file.");
   }
 
   //Writing to the file
   File file = SD.open(filename, FILE_WRITE);
-
+  //checking for the file and write
   if (file) {
     file.println(data);
     file.close();
@@ -490,13 +496,13 @@ void WriteSDCard(const char* filename, const char* data) {
 //Reading the Door sensor to verify door status
 bool ReadDoorSens() {
   lastDoorState = currentDoorState;
-  currentDoorState = digitalRead(DOOR_SENSOR_PIN);
-  delay(50);
+  currentDoorState = digitalRead(DOOR_SENSOR_PIN);    //reading from the door sensor
+  delay(10);
   if (lastDoorState == LOW && currentDoorState == HIGH) {
     Serial.println("The door-opening event is detected");
     return 1;
   } else
-    delay(50);
+    delay(10);
   if (lastDoorState == HIGH && currentDoorState == LOW) {
     Serial.println("The door-closing event is detected");
     timeOut = 0;
@@ -509,13 +515,14 @@ void ControlDoor(bool direction) {
   if (direction == HIGH) {
     // turn clockwise for 3 secs
     Serial.println("Turning Right...");
+    analogWrite(motorPwm, motorSpeed);
     digitalWrite(motorIn_1, HIGH);
     digitalWrite(motorIn_2, LOW);
-    analogWrite(motorPwm, 255);
     delay(doorMovementTime);
   } else if (direction == LOW) {
     // turn anti clockwise for 3 secs
     Serial.println("Turning Left...");
+    analogWrite(motorPwm, motorSpeed);
     digitalWrite(motorIn_1, LOW);
     digitalWrite(motorIn_2, HIGH);
     delay(doorMovementTime);
@@ -523,13 +530,13 @@ void ControlDoor(bool direction) {
   //break the motor
   digitalWrite(motorIn_1, HIGH);
   digitalWrite(motorIn_2, HIGH);
-  delay(1000);
+  delay(doorMovementTime);
 }
 
 
 
 
-
+//Configuration options for the SliderPlus
 /*
 Syntax: 
 	<Security Mode>,<Password (4 Digit)>

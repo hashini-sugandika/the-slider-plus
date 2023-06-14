@@ -1,5 +1,6 @@
+![slider-plus-logo](https://github.com/th3-s7r4ng3r/the-slider-plus/blob/main/resources/images/sliderPlusLogo.png)
+
 # The Slider+
-![slider-plus-protype](https://github.com/th3-s7r4ng3r/the-slider-plus/blob/main/resources/images/SliderPlus.png "slider-plus-protype")
 
 The Slider+ is a smart security door that is fully automated and uses open source technology. The door can be unlocked using RFID/NFC, pin-based unlock, or fingerprint unlock. It also has redundant power backup and is a multifactor security platform.
 
@@ -20,5 +21,3 @@ The Slider+ is a multifactor security platform that provides an extra layer of p
 
 ## Resources
 Get wiring diagrams from [circuito.io](http://https://www.circuito.io/app?components=1331,8654,9442,11061,13959,653574,761981,956215,1671987,7654323 "circuito.io")
-
-![slider-plus-logo](https://github.com/th3-s7r4ng3r/the-slider-plus/blob/main/resources/images/sliderPlusLogo.png)

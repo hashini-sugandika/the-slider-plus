@@ -20,4 +20,4 @@ The Slider+ is a multifactor security platform that provides an extra layer of p
 - Open Source Platform
 
 ## Resources
-Get wiring diagrams from [circuito.io]([http://https://www.circuito.io/app?components=1331,8654,9442,11061,13959,653574,761981,956215,1671987,7654323](https://www.circuito.io/app?components=1331,8654,9442,11061,13959,653574,761981,956215,1671987,7654323) "circuito.io")
+Get wiring diagrams from [circuito.io](https://www.circuito.io/app?components=1331,8654,9442,11061,13959,653574,761981,956215,1671987,7654323)]

@@ -1,7 +1,7 @@
 //########## Basic Setup & Code ##########
 //-----------Common for all Module---------
-int currentDoorState = 0;   //current status of the door
-int lastDoorState = 0;      //last status of the door
+bool currentDoorState;   //current status of the door
+bool lastDoorState;      //last status of the door
 char securityMode = 'A';    //select the mode of Multifactor Authentication
 char securityModeArray[5];  //Use for converting security types
 
@@ -58,11 +58,11 @@ int timeOut = 0;                    //Motion sensor timeout
 const int DOOR_SENSOR_PIN = 13;  //door sensor pin
 
 //-------------DC Motor Controller----------------
-const int motorPwm = 4;  // initializing pin 4 as pwm
+const int motorPwm = 9;  // initializing pin 4 as pwm
 const int motorIn_1 = 11;
 const int motorIn_2 = 12;
-int motorSpeed = 255;        //speed of the motor
-int doorMovementTime = 175;  //control the angle of motor turn
+int motorSpeed = 100;        //speed of the motor
+//int doorMovementTime = 50;  //control the angle of motor turn
 
 //-------------RFID Module-----------
 #include <MFRC522.h>
@@ -88,6 +88,12 @@ const int relayPin = 6;  //use for switching between SD module and NFC module
 //-------------Fingerprint Module--------
 bool FingerprintStatus = false;  //current status of the fingerprint module
 
+//--------------IR Sensor Module-----------
+int openDoorpin = A1;  //when door is open
+int openDoorRead = 0;
+int closeDoorpin = A2;  //when door is close
+int closeDoorRead = 0;
+
 
 //########## Setup & Code ##########
 void setup() {
@@ -98,6 +104,10 @@ void setup() {
 
   //Buzzer Module
   pinMode(buzzerPin, OUTPUT);
+
+  //IR modules
+  pinMode(openDoorpin, INPUT);
+  pinMode(closeDoorpin, INPUT);
 
   //Touch Sensor Module
   pinMode(TouchSensor_Pin, INPUT);
@@ -198,6 +208,7 @@ void loop() {
   //printing current door status
   Serial.print("Door Status : ");
   Serial.println(ReadDoorSens());
+  analogWrite(motorPwm, motorSpeed);  //controlling the speed of the door
 
   // Configuring how to function the inside touch button
   if (ReadTouchSens() && currentDoorState == 1) {  //close the door of door is open
@@ -231,7 +242,13 @@ void loop() {
 //########## Functions ##########
 void openDoor() {  //open the door function
   WriteToBuzzer(1);
-  ControlDoor(1);
+  while (!openDoorSens()) {  //looping until fully openning the door
+    ControlDoor(1);
+    if (ReadTouchSens()) {
+      break;
+    }
+  }
+  ControlDoor(2);  //breake the motor
   Serial.println("Door is opening...");
   //resetting the status of each module
   RFIDStatus = false;
@@ -240,7 +257,13 @@ void openDoor() {  //open the door function
 }
 void closeDoor() {  //closing the door function
   WriteToBuzzer(1);
-  ControlDoor(0);
+  while (ReadDoorSens()) {  //looping until fully closing the door
+    ControlDoor(0);
+    if (ReadTouchSens()) {
+      break;
+    }
+  }
+  ControlDoor(2);  //brake the motor
   Serial.println("Door is closing...");
 }
 
@@ -410,6 +433,7 @@ int ReadMotionSens() {
   } else {
     // Code to close the door
     Serial.println("Object has passed 100cm from the door");
+    MotionStatus == 0;
     return 0;
   }
 }
@@ -443,24 +467,38 @@ bool ReadTouchSens() {
   delay(5);
 }
 
+//IR sensoe Module, Control the door state
+bool openDoorSens() {
+  openDoorRead = digitalRead(openDoorpin);
+  //Serial.println(openDoorRead);
+  return openDoorRead;
+}
+
+bool closeDoorSens() {
+  closeDoorRead = digitalRead(closeDoorpin);
+  //Serial.println(closeDoorRead);
+  return closeDoorRead;
+}
+
+
 //Reading configurations from the SD Card
 void ReadSDCard() {
   const char* filename = "config.txt";
   File file = SD.open(filename);
   String line;
-  if (file) {   //checking for ht file
+  if (file) {  //checking for ht file
     while (file.available()) {
       char x = file.read();
-      if (x == '\n') {    //read the first line
+      if (x == '\n') {  //read the first line
         break;
       }
-      line = line + x;      //add each char into a string line
+      line = line + x;  //add each char into a string line
     }
     char i;
-    String config[5];       //saving config to an array
+    String config[5];  //saving config to an array
     for (i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
-      if (c == ',') {       //break into indexes using ","
+      if (c == ',') {  //break into indexes using ","
         config[0] = line.charAt(i - 1);
         config[1] = line.substring(i + 1);
       }
@@ -496,41 +534,41 @@ void WriteSDCard(const char* filename, const char* data) {
 //Reading the Door sensor to verify door status
 bool ReadDoorSens() {
   lastDoorState = currentDoorState;
-  currentDoorState = digitalRead(DOOR_SENSOR_PIN);    //reading from the door sensor
+  currentDoorState = digitalRead(DOOR_SENSOR_PIN);  //reading from the door sensor
   delay(10);
-  if (lastDoorState == LOW && currentDoorState == HIGH) {
+  if (lastDoorState == 0 && currentDoorState == 1) {
     Serial.println("The door-opening event is detected");
     return 1;
   } else
     delay(10);
-  if (lastDoorState == HIGH && currentDoorState == LOW) {
+  if (lastDoorState == 1 && currentDoorState == 0) {
     Serial.println("The door-closing event is detected");
     timeOut = 0;
     return 0;
   }
+  //return 0;
 }
 
 //Controlling the door using the motor
-void ControlDoor(bool direction) {
-  if (direction == HIGH) {
+void ControlDoor(int direction) {
+  if (direction == 1) {
     // turn clockwise for 3 secs
     Serial.println("Turning Right...");
-    analogWrite(motorPwm, motorSpeed);
     digitalWrite(motorIn_1, HIGH);
     digitalWrite(motorIn_2, LOW);
-    delay(doorMovementTime);
-  } else if (direction == LOW) {
+    //delay(doorMovementTime);
+  } else if (direction == 0) {
     // turn anti clockwise for 3 secs
     Serial.println("Turning Left...");
-    analogWrite(motorPwm, motorSpeed);
     digitalWrite(motorIn_1, LOW);
     digitalWrite(motorIn_2, HIGH);
-    delay(doorMovementTime);
+    //delay(doorMovementTime);
+  } else if (direction = 2) {
+    //break the motor
+    digitalWrite(motorIn_1, HIGH);
+    digitalWrite(motorIn_2, HIGH);
+    //delay(doorMovementTime);
   }
-  //break the motor
-  digitalWrite(motorIn_1, HIGH);
-  digitalWrite(motorIn_2, HIGH);
-  delay(doorMovementTime);
 }
 
 

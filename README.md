@@ -27,7 +27,7 @@ Get wiring diagrams from [circuito.io](https://www.circuito.io/app?components=13
 - [Vinura Gallage](https://github.com/th3-s7r4ng3r "Vinura Gallage")
 - [Champika Dilshan](https://github.com/champikadilshan "Champika Dilshan")
 - [Duleeka Mevan](https://github.com/MevanWeerasinghe "uleeka Mevan")
-- [Kalana Thilakarathne](Kalana-Thilakarathna "Kalana Thilakarathne")
+- [Kalana Thilakarathne](https://github.com/Kalana-Thilakarathna "Kalana Thilakarathne")
 - [Hashini Sugandika](https://github.com/hashini-sugandika "Hashini Sugandika")
 - [Lasantha Chulabaya](https://github.com/Lasantha-chulabhaya "Lasantha Chulabaya")
 - [Harshana Prabath](https://github.com/HarshanaPSemasinghe "Harshana Prabath")
